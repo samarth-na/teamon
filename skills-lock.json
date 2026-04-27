@@ -1,15 +1,30 @@
 {
   "version": 1,
   "skills": {
+    "better-auth-best-practices": {
+      "source": "better-auth/skills",
+      "sourceType": "github",
+      "computedHash": "a4c830509e85557b59339d8d93a4e243e9e59c686e7678854d39230e12c2a6dc"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
     },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "6cdb44e9c63b67e32c4ac6d5064ece032adfc322222285cbbe936ec1a3e79915"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
       "computedHash": "2bc6cf38ec7b4a5778a43fabb3e87642c9897ad45e9eb42438b57fd2def6cca8"
+    },
+    "turso-db": {
+      "source": "tursodatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "d1aa5693c437b9bb848642fe04d613097fe54200c8190f09e7351f7d473c6b83"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
