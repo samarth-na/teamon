@@ -1,6 +1,17 @@
 import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export const project = sqliteTable("project", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#4f46e5"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
 export const task = sqliteTable("task", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
@@ -25,6 +36,9 @@ export const task = sqliteTable("task", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  projectId: text("project_id").references(() => project.id, {
+    onDelete: "set null",
+  }),
 });
 
 export const user = sqliteTable("user", {
@@ -41,12 +55,25 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   tasks: many(task),
+  projects: many(project),
+}));
+
+export const projectRelations = relations(project, ({ one, many }) => ({
+  user: one(user, {
+    fields: [project.userId],
+    references: [user.id],
+  }),
+  tasks: many(task),
 }));
 
 export const taskRelations = relations(task, ({ one }) => ({
   user: one(user, {
     fields: [task.userId],
     references: [user.id],
+  }),
+  project: one(project, {
+    fields: [task.projectId],
+    references: [project.id],
   }),
 }));
 

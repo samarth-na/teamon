@@ -3,118 +3,86 @@
 import { Calendar, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toggleTaskStatus } from "@/lib/actions";
+import type { SerializableProject, SerializableTask } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-interface Task {
-  id: string;
-  title: string;
-  status: string;
-  priority: "low" | "medium" | "high" | "urgent";
-  dueDate?: string;
-  projectId: string;
+const priorityMeta = {
+  urgent: {
+    label: "Urgent",
+    ring: "ring-priority-urgent/30",
+    text: "text-priority-urgent",
+    bg: "bg-priority-urgent",
+  },
+  high: {
+    label: "High",
+    ring: "ring-priority-high/30",
+    text: "text-priority-high",
+    bg: "bg-priority-high",
+  },
+  medium: {
+    label: "Medium",
+    ring: "ring-priority-medium/30",
+    text: "text-priority-medium",
+    bg: "bg-priority-medium",
+  },
+  low: {
+    label: "Low",
+    ring: "ring-priority-low/30",
+    text: "text-priority-low",
+    bg: "bg-priority-low",
+  },
+};
+
+interface ListViewProps {
+  tasks: SerializableTask[];
+  projects: SerializableProject[];
 }
 
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    title: "Review Q3 roadmap",
-    status: "in_progress",
-    priority: "high",
-    dueDate: "2026-04-28",
-    projectId: "2",
-  },
-  {
-    id: "2",
-    title: "Update design tokens",
-    status: "todo",
-    priority: "medium",
-    dueDate: "2026-04-29",
-    projectId: "1",
-  },
-  {
-    id: "3",
-    title: "Fix navigation bug",
-    status: "todo",
-    priority: "urgent",
-    dueDate: "2026-04-27",
-    projectId: "2",
-  },
-  {
-    id: "4",
-    title: "Write documentation",
-    status: "backlog",
-    priority: "low",
-    projectId: "3",
-  },
-  {
-    id: "5",
-    title: "Team standup notes",
-    status: "done",
-    priority: "medium",
-    dueDate: "2026-04-26",
-    projectId: "2",
-  },
-  {
-    id: "6",
-    title: "Refactor auth logic",
-    status: "in_progress",
-    priority: "high",
-    projectId: "1",
-  },
-  {
-    id: "7",
-    title: "Explore KokonutUI",
-    status: "done",
-    priority: "low",
-    projectId: "3",
-  },
-];
+export default function ListView({
+  tasks: initialTasks,
+  projects,
+}: ListViewProps) {
+  const [tasks, setTasks] = useState(initialTasks);
 
-const projects: Record<string, { name: string; color: string }> = {
-  "1": { name: "Personal", color: "#4f46e5" },
-  "2": { name: "Work", color: "#059669" },
-  "3": { name: "Side Project", color: "#d97706" },
-};
-
-const priorityConfig = {
-  low: { label: "Low", color: "bg-slate-400" },
-  medium: { label: "Medium", color: "bg-blue-500" },
-  high: { label: "High", color: "bg-amber-500" },
-  urgent: { label: "Urgent", color: "bg-red-500" },
-};
-
-export default function ListView() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-
-  const toggleTask = (id: string) => {
+  const handleToggle = async (id: string) => {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? { ...t, status: t.status === "done" ? "todo" : "done" }
+          ? {
+              ...t,
+              status: t.status === "done" ? "todo" : "done",
+            }
           : t,
       ),
     );
+    await toggleTaskStatus(id);
   };
+
+  const projectMap = Object.fromEntries(projects.map((p) => [p.id, p]));
 
   const activeTasks = tasks.filter((t) => t.status !== "done");
   const doneTasks = tasks.filter((t) => t.status === "done");
 
-  const TaskRow = ({ task }: { task: Task }) => {
+  const TaskRow = ({ task }: { task: SerializableTask }) => {
     const isDone = task.status === "done";
-    const project = projects[task.projectId];
-    const priority = priorityConfig[task.priority];
+    const project = task.projectId ? projectMap[task.projectId] : null;
+    const priority =
+      priorityMeta[task.priority as keyof typeof priorityMeta] ??
+      priorityMeta.medium;
 
     return (
       <div
         className={cn(
           "group flex items-center gap-3 rounded-md border px-3 py-2.5 transition-colors hover:bg-accent/50",
           isDone && "opacity-50",
+          !isDone && priority.ring,
         )}
       >
         <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-50 cursor-grab" />
         <Checkbox
           checked={isDone}
-          onCheckedChange={() => toggleTask(task.id)}
+          onCheckedChange={() => handleToggle(task.id)}
           className="shrink-0"
         />
         <div className="flex flex-1 flex-col gap-0.5 min-w-0">
@@ -128,23 +96,35 @@ export default function ListView() {
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
-            style={{ backgroundColor: project.color }}
-          >
-            {project.name}
+          {project && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-white"
+              style={{ backgroundColor: project.color }}
+            >
+              {project.name}
+            </span>
+          )}
+          <span className="flex items-center gap-1.5 shrink-0">
+            <span className={cn("h-2.5 w-2.5 rounded-full", priority.bg)} />
+            <span
+              className={cn(
+                "hidden group-hover:inline text-[10px] font-medium",
+                priority.text,
+              )}
+            >
+              {priority.label}
+            </span>
           </span>
-          <span
-            className={cn("h-2 w-2 rounded-full", priority.color)}
-            title={priority.label}
-          />
           {task.dueDate && (
             <span className="flex items-center gap-1 text-muted-foreground text-xs">
               <Calendar className="h-3 w-3" />
-              {new Date(task.dueDate).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
+              {new Date(task.dueDate + "T00:00:00").toLocaleDateString(
+                "en-US",
+                {
+                  month: "short",
+                  day: "numeric",
+                },
+              )}
             </span>
           )}
         </div>

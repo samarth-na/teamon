@@ -4,61 +4,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { SerializableProject, SerializableTask } from "@/lib/types";
 
-interface Task {
-  id: string;
-  title: string;
-  dueDate: string;
-  projectId: string;
-  status: string;
+interface CalendarViewProps {
+  tasks: SerializableTask[];
+  projects: SerializableProject[];
 }
 
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    title: "Review Q3 roadmap",
-    dueDate: "2026-04-28",
-    projectId: "2",
-    status: "in_progress",
-  },
-  {
-    id: "2",
-    title: "Update design tokens",
-    dueDate: "2026-04-29",
-    projectId: "1",
-    status: "todo",
-  },
-  {
-    id: "3",
-    title: "Fix navigation bug",
-    dueDate: "2026-04-27",
-    projectId: "2",
-    status: "todo",
-  },
-  {
-    id: "4",
-    title: "Team standup notes",
-    dueDate: "2026-04-26",
-    projectId: "2",
-    status: "done",
-  },
-  {
-    id: "5",
-    title: "Refactor auth logic",
-    dueDate: "2026-04-30",
-    projectId: "1",
-    status: "in_progress",
-  },
-];
-
-const projects: Record<string, { name: string; color: string }> = {
-  "1": { name: "Personal", color: "#4f46e5" },
-  "2": { name: "Work", color: "#059669" },
-  "3": { name: "Side Project", color: "#d97706" },
-};
-
-export default function CalendarView() {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1)); // April 2026
+export default function CalendarView({ tasks, projects }: CalendarViewProps) {
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -66,7 +20,7 @@ export default function CalendarView() {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
-  const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
+  const startDayOfWeek = firstDay.getDay();
 
   const monthLabel = currentDate.toLocaleDateString("en-US", {
     month: "long",
@@ -78,8 +32,12 @@ export default function CalendarView() {
 
   const getTasksForDay = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return mockTasks.filter((t) => t.dueDate === dateStr);
+    return tasks.filter((t) => t.dueDate === dateStr);
   };
+
+  const projectMap = Object.fromEntries(
+    projects.map((p) => [p.id, p]),
+  );
 
   const today = new Date();
   const isToday = (day: number) =>
@@ -89,7 +47,6 @@ export default function CalendarView() {
 
   const cells: React.ReactNode[] = [];
 
-  // Empty cells for days before the 1st
   for (let i = 0; i < startDayOfWeek; i++) {
     cells.push(
       <div
@@ -99,7 +56,6 @@ export default function CalendarView() {
     );
   }
 
-  // Day cells
   for (let day = 1; day <= daysInMonth; day++) {
     const dayTasks = getTasksForDay(day);
     cells.push(
@@ -121,21 +77,25 @@ export default function CalendarView() {
           {day}
         </span>
         <div className="mt-1 flex flex-col gap-1">
-          {dayTasks.map((task) => (
-            <div
-              key={task.id}
-              className={cn(
-                "truncate rounded px-1.5 py-0.5 text-[11px] font-medium",
-                task.status === "done" && "opacity-50 line-through",
-              )}
-              style={{
-                backgroundColor: `${projects[task.projectId].color}18`,
-                color: projects[task.projectId].color,
-              }}
-            >
-              {task.title}
-            </div>
-          ))}
+          {dayTasks.map((task) => {
+            const project = task.projectId ? projectMap[task.projectId] : null;
+            const color = project?.color ?? "#888";
+            return (
+              <div
+                key={task.id}
+                className={cn(
+                  "truncate rounded px-1.5 py-0.5 text-[11px] font-medium",
+                  task.status === "done" && "opacity-50 line-through",
+                )}
+                style={{
+                  backgroundColor: `${color}18`,
+                  color,
+                }}
+              >
+                {task.title}
+              </div>
+            );
+          })}
         </div>
       </div>,
     );

@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut, useSession } from "@/lib/auth-client";
+import type { SerializableProject } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export type ViewId = "list" | "kanban" | "calendar" | "timeline";
@@ -34,6 +35,7 @@ interface SidebarProps {
   onViewChange: (view: ViewId) => void;
   onSearchOpen: () => void;
   onNewTask: () => void;
+  projects: SerializableProject[];
 }
 
 const views: { id: ViewId; label: string; icon: React.ElementType }[] = [
@@ -43,17 +45,12 @@ const views: { id: ViewId; label: string; icon: React.ElementType }[] = [
   { id: "timeline", label: "Timeline", icon: Timer },
 ];
 
-const projects = [
-  { id: "1", name: "Personal", color: "#4f46e5" },
-  { id: "2", name: "Work", color: "#059669" },
-  { id: "3", name: "Side Project", color: "#d97706" },
-];
-
 export default function Sidebar({
   currentView,
   onViewChange,
   onSearchOpen,
   onNewTask,
+  projects,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
@@ -159,6 +156,11 @@ export default function Sidebar({
             {project.name}
           </button>
         ))}
+        {projects.length === 0 && (
+          <div className="px-2.5 py-3 text-xs text-muted-foreground">
+            No projects yet
+          </div>
+        )}
       </div>
 
       {/* Footer */}
